@@ -142,7 +142,7 @@ export function startIntro(onDone) {
   // 声明层：官网地址可点（系统浏览器打开），只有「继续」按钮能收起声明
   iv.querySelector('#introDeclareSite').addEventListener('click', (e) => {
     e.stopPropagation();
-    openExternal('https://pokeidle.shiliu.space/');
+    openExternal('https://r3111453.github.io/PokeIdle/');
   });
   iv.querySelector('#introDeclareGo').addEventListener('click', () => dismissDeclare());
   document.body.classList.remove('booting'); // 界面风格已切好，剧情页可以露出来了
