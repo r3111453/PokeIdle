@@ -29,7 +29,7 @@ const CHOICE_LINE = SCRIPT.findIndex(l => l.includes('再次开启旅行如何')
 const DECLARE_HTML = `
   <div class="intro-declare-title">重要声明</div>
   <div class="intro-declare-text">本游戏完全免费，作者从未在任何渠道出售或授权出售。若你是花钱买到的，请立即向平台举报并申请退款。也请勿转售、改名传播或用于任何商业用途。</div>
-  <div class="intro-declare-site" id="introDeclareSite">唯一官方渠道：https://r3111453.github.io/PokeIdle/</div>
+  <div class="intro-declare-site" id="introDeclareSite">唯一官方渠道：https://pokeidle.shiliu.space/</div>
   <button type="button" class="intro-declare-go" id="introDeclareGo">我已了解，继续</button>
 `;
 
@@ -136,13 +136,20 @@ export function startIntro(onDone) {
     </div>
     <div class="intro-declare" id="introDeclare">${DECLARE_HTML}</div>
   `;
+
+  // ===== 新加的开始：跳过声明页 =====
+  const declareEl = iv.querySelector('#introDeclare');
+  if (declareEl) declareEl.style.display = 'none';
+  setTimeout(() => dismissDeclare(), 0);
+  // ===== 新加的结束 =====
+
   iv.querySelectorAll('.intro-pick-btn').forEach(btn => {
     btn.addEventListener('click', () => chooseGender(btn.dataset.gender));
   });
   // 声明层：官网地址可点（系统浏览器打开），只有「继续」按钮能收起声明
   iv.querySelector('#introDeclareSite').addEventListener('click', (e) => {
     e.stopPropagation();
-    openExternal('https://r3111453.github.io/PokeIdle/');
+    openExternal('https://pokeidle.shiliu.space/');
   });
   iv.querySelector('#introDeclareGo').addEventListener('click', () => dismissDeclare());
   document.body.classList.remove('booting'); // 界面风格已切好，剧情页可以露出来了
