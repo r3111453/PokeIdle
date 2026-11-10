@@ -29,7 +29,7 @@ const CHOICE_LINE = SCRIPT.findIndex(l => l.includes('再次开启旅行如何')
 const DECLARE_HTML = `
   <div class="intro-declare-title">重要声明</div>
   <div class="intro-declare-text">本游戏完全免费，作者从未在任何渠道出售或授权出售。若你是花钱买到的，请立即向平台举报并申请退款。也请勿转售、改名传播或用于任何商业用途。</div>
-  <div class="intro-declare-site" id="introDeclareSite">唯一官方渠道：https://pokeidle.shiliu.space/</div>
+  <div class="intro-declare-site" id="introDeclareSite">唯一官方渠道：https://r3111453.github.io/PokeIdle/</div>
   <button type="button" class="intro-declare-go" id="introDeclareGo">我已了解，继续</button>
 `;
 
