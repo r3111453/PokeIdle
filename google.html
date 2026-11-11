@@ -1,0 +1,221 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google 驗證碼產生器 (TOTP)</title>
+    <!-- otplib v13 瀏覽器版 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/otplib/dist/index.global.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Microsoft JhengHei", system-ui, -apple-system, sans-serif;
+            background: #f5f5f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+        h2 { margin-top: 0; color: #333; }
+        .subtitle {
+            font-size: 0.85rem;
+            color: #888;
+            margin: -8px 0 16px;
+        }
+        label {
+            display: block;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 4px 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: "Courier New", monospace;
+        }
+        input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
+        }
+        button {
+            width: 100%;
+            padding: 11px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: #1557b0; }
+        .code {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: 8px;
+            color: #1a73e8;
+            margin: 1.5rem 0 0.5rem;
+            font-family: "Courier New", monospace;
+            min-height: 4rem;
+            line-height: 4rem;
+            user-select: all;
+        }
+        .code.error {
+            font-size: 1rem;
+            letter-spacing: 0;
+            color: #d93025;
+            line-height: 1.4;
+            min-height: auto;
+            padding: 12px 0;
+        }
+        .timer {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        .progress-bar {
+            height: 4px;
+            background: #e8eaed;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #1a73e8;
+            width: 100%;
+            transition: width 0.5s linear;
+        }
+        .hint {
+            font-size: 0.78rem;
+            color: #999;
+            margin-top: 16px;
+            line-height: 1.5;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🔐 驗證碼產生器</h2>
+    <div class="subtitle">寫給魔一下用的</div>
+
+    <label for="secretInput">Base32 密鑰</label>
+    <input type="text" id="secretInput"
+           placeholder="請輸入 Base32 密鑰"
+           value="OZLHGQ2KORDFS5ZW"
+           autocomplete="off" spellcheck="false">
+
+    <button onclick="startGenerating()">開始產生</button>
+
+    <div class="code" id="codeDisplay">------</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="timer" id="timerDisplay"></div>
+
+    <div class="hint">
+        已放寬密鑰長度限制，支援 10 位元組的短密鑰（如 Google 發出的舊式密鑰）。<br>
+        密鑰需為全大寫 Base32 字元（A-Z、2-7）。
+    </div>
+</div>
+
+<script>
+    let intervalId = null;
+
+    function cleanSecret(raw) {
+        return (raw || "").replace(/\s+/g, "").toUpperCase();
+    }
+
+    function isValidBase32(s) {
+        return /^[A-Z2-7]+=*$/.test(s) && s.length > 0;
+    }
+
+    function startGenerating() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+
+        const secret = cleanSecret(document.getElementById('secretInput').value);
+        document.getElementById('secretInput').value = secret;
+
+        if (!secret) {
+            showError("請輸入密鑰");
+            return;
+        }
+        if (!isValidBase32(secret)) {
+            showError("密鑰格式錯誤：只能包含 A-Z 與 2-7");
+            return;
+        }
+        if (typeof otplib === 'undefined' || typeof otplib.generate !== 'function') {
+            showError("otplib 函式庫未正確載入");
+            return;
+        }
+
+        updateCode(secret);
+        intervalId = setInterval(() => updateCode(secret), 500);
+    }
+
+    async function updateCode(secret) {
+        const codeEl = document.getElementById('codeDisplay');
+        const timerEl = document.getElementById('timerDisplay');
+        const progressEl = document.getElementById('progressFill');
+
+        let token;
+        try {
+            // 關鍵：使用 createGuardrails 放寬最短長度至 1 位元組
+            token = await otplib.generate({
+                secret: secret,
+                guardrails: otplib.createGuardrails({ MIN_SECRET_BYTES: 1 })
+            });
+        } catch (e) {
+            showError("無法產生驗證碼：" + (e.message || "密鑰無效"));
+            return;
+        }
+
+        codeEl.textContent = token;
+        codeEl.classList.remove('error');
+
+        const nowMs = Date.now();
+        const periodMs = 30000;
+        const remainingMs = periodMs - (nowMs % periodMs);
+        const remainingSec = Math.ceil(remainingMs / 1000);
+
+        timerEl.textContent = `⏳ ${remainingSec} 秒後更新`;
+        progressEl.style.width = (remainingMs / periodMs * 100) + "%";
+    }
+
+    function showError(msg) {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+        const codeEl = document.getElementById('codeDisplay');
+        codeEl.textContent = msg;
+        codeEl.classList.add('error');
+        document.getElementById('timerDisplay').textContent = "";
+        document.getElementById('progressFill').style.width = "0%";
+    }
+
+    window.addEventListener('load', startGenerating);
+</script>
+
+</body>
+</html>
