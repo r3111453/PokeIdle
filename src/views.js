@@ -1411,7 +1411,7 @@ export function renderSettings(container, s) {
             <a class="about-link about-link-icon" id="githubLink" href="https://github.com/r3111453/PokeIdle" target="_blank" rel="noopener">
               <svg viewBox="0 0 1024 1024" width="12" height="12"><use xlink:href="#icon-github"/></svg>ZTMYO
             </a>
-            <a class="about-link" id="siteLink" href="https://pokeidle.shiliu.space" target="_blank" rel="noopener">官方网站</a>
+            <a class="about-link" id="siteLink" href="https://r3111453.github.io/PokeIdle/" target="_blank" rel="noopener">官方网站</a>
           </div>
           <div class="about-link-sm-row">
             <span class="about-link about-link-sm" id="declarationBtn">版权声明</span>
@@ -1913,7 +1913,7 @@ export function renderSettings(container, s) {
     else window.open(url, '_blank');
   };
   container.querySelector('#githubLink')?.addEventListener('click', (e) => openLink(e, 'https://github.com/r3111453/PokeIdle'));
-  container.querySelector('#siteLink')?.addEventListener('click', (e) => openLink(e, 'https://pokeidle.shiliu.space'));
+  container.querySelector('#siteLink')?.addEventListener('click', (e) => openLink(e, 'https://r3111453.github.io/PokeIdle/'));
   // 版本号来自 build-info.js；热更只换资源不动版本号，所以状态用一个小圆点表示
   const paintVersion = () => {
     const el = container.querySelector('#settingsVersion');
