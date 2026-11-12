@@ -133,6 +133,20 @@ function buildBoard() {
     board.onpointermove = null;
     board.onpointerup = null;
     board.onclick = onBoardClickLegacy;
+
+    // 🌟 給 Win7 玩家的專屬提示
+    setTimeout(() => {
+      const tip = document.createElement('div');
+      tip.style.cssText = 'position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:white; padding:10px 15px; border-radius:8px; font-size:13px; z-index:999; text-align:center; line-height:1.5; pointer-events:none; box-shadow:0 4px 6px rgba(0,0,0,0.3);';
+      tip.innerHTML = '🖱️ 點擊模式已啟用<br>請點擊一隻寶可夢，再點擊另一隻同色寶可夢。';
+      board.appendChild(tip);
+      
+      // 5 秒後自動消失
+      setTimeout(() => {
+        if (tip.parentNode) tip.parentNode.removeChild(tip);
+      }, 5000);
+    }, 100);
+
   } else {
     board.onpointerdown = onDown;
     board.onpointermove = onMove;
