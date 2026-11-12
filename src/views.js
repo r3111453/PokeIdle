@@ -1415,9 +1415,11 @@ export function renderSettings(container, s) {
             </a>
             <a class="about-link" id="siteLink" href="https://r3111453.github.io/PokeIdle/" target="_blank" rel="noopener">官方网站</a>
           </div>
+          <!--
           <div class="about-link-sm-row">
             <span class="about-link about-link-sm" id="declarationBtn">版权声明</span>
           </div>
+          -->
         </div>
         <div class="about-credit">粉丝自制 完全免费 禁止倒卖</div>
       </div>
