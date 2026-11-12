@@ -1404,9 +1404,11 @@ export function renderSettings(container, s) {
             <div class="about-name">口袋挂机</div>
             <div class="settings-version" id="settingsVersion"></div>
           </div>
+          <!--
           <div class="about-sponsor-row">
             <span class="about-link about-link-sponsor" id="sponsorBtn"><svg class="about-sponsor-icon" viewBox="0 0 1024 1024" aria-hidden="true"><path d="M847.701333 383.744l-85.333333 597.589333H261.632L176.298667 383.786667a85.333333 85.333333 0 0 1-76.458667-105.813334l21.333333-85.333333a85.333333 85.333333 0 0 1 64.853334-62.72l20.053333-40.106667A85.333333 85.333333 0 0 1 282.325333 42.666667h459.264a85.333333 85.333333 0 0 1 76.330667 47.189333l20.053333 40.064a85.333333 85.333333 0 0 1 64.810667 62.72l21.333333 85.333333a85.333333 85.333333 0 0 1-76.458666 105.813334zM262.528 384l73.130667 512h352.682666l73.130667-512H262.528z m-22.826667-170.666667h-35.712l-21.333333 85.333334h658.688l-21.333333-85.333334h-35.712l-42.666667-85.333333H282.368l-42.666667 85.333333z" fill="currentColor"></path></svg>赞助者鸣谢</span>
           </div>
+          -->
           <div class="about-links">
             <a class="about-link about-link-icon" id="githubLink" href="https://github.com/r3111453/PokeIdle" target="_blank" rel="noopener">
               <svg viewBox="0 0 1024 1024" width="12" height="12"><use xlink:href="#icon-github"/></svg>ZTMYO
