@@ -452,6 +452,7 @@ export function getDefaultSave() {
     tmShop: null,   // 商店今日招式机货架：{ date, ids }，由 tm.js 管理
     music: { mode: 'region', album: 3, playlist: [] }, // 音乐点播：当前地区 / 固定世代 / 我的喜爱（由 music.js 管理）
     legendPool: null, // 每日神兽池：{ date, byRegion: { 地区: [编号…] } }，由 items.js 管理
+    legendFound: null, // 今日神兽发现：{ date, byRegion: { 地区: [编号…] } }，只记野外捕获的每日神兽
     legendPity: 0,    // 神兽池软保底计数：连着多少场遇敌没出神兽
     trades: null, // 交换广场：{ refreshedAt: Date.now(), offers: [{ npc, want, give, traded }] }，由 trade.js 管理
     battleNpcs: null, // NPC 挑战：{ refreshedAt: Date.now(), list: [{ id, tier, title, name, sprite, lvBonus, candy, mons }] }，由 npcs.js 管理
@@ -999,15 +1000,12 @@ export function calcOffline(save) {
     save.gps.bikePrevNav = null;
   }
   save.stats.totalPlaySeconds += elapsed;
-  // 今日挂机时长：跨天时只累计今天 0 点之后的部分（昨天的离线秒数不计入今天）
+  // 大退/离线不计入今日挂机时长：今天只统计仍在前台会话里实际挂机的时间。
+  // 跨天时只把日期翻到当天，不把离线秒数补进今日。
   const ts = todayDateStr();
   if (save.stats.lastPlayDate !== ts) {
     save.stats.lastPlayDate = ts;
     save.stats.playSecondsToday = 0;
-    const midnight = new Date(now).setHours(0, 0, 0, 0);
-    save.stats.playSecondsToday += Math.max(0, Math.min(elapsed, (now - midnight) / 1000));
-  } else {
-    save.stats.playSecondsToday = (save.stats.playSecondsToday || 0) + elapsed;
   }
   clampToday(save);
   // 离线暂停：把依赖真实时间推进的机制时间基准整体后移，等价于离线期间不走表。

@@ -28,7 +28,7 @@ import { initAudio, playRegion, playCycling, endCycling, stopVictory, stopCongra
 import { restoreMusicMode } from './music.js';
 import { startTelemetry } from './telemetry.js';
 import { ensureBounty, updateBountyBadge, isBountyInTrade, restoreBountyList } from './bounty.js';
-import { isNurseryPicking, leaveNurseryPick, isNurseryEggView, leaveNurseryEggView, isNurseryFavView, leaveNurseryFavView, showNurseryView } from './nursery.js';
+import { isNurseryPicking, leaveNurseryPick, isNurseryEggView, leaveNurseryEggView, isNurseryFavView, leaveNurseryFavView, isEggBatchDiscarding, cancelEggBatchDiscard, showNurseryView } from './nursery.js';
 import { isTrainPicking, leaveTrainPick, showTrainView } from './train.js';
 import { isDispatchPicking, leaveDispatchPick, processDispatch } from './dispatch.js';
 import { retreatBattle, isBattleActive, isBattleSettled, restoreBattleTier, clearBattleTier, isLogOpen, closeLogPage, syncLogTitle, showBattleView } from './battle-view.js';
@@ -40,6 +40,16 @@ import { initBackgroundCatchup, startBackgroundCatchup, notifyAppState, bgCatchu
 import { startEventRefresh } from './server-events.js';
 import { startActivityRefresh } from './activity.js';
 import { startLotteryRefresh } from './lottery.js';
+import { DEV } from './build-info.js';
+
+// 开发态直服 src 时，清掉同源残留的 Service Worker / Cache Storage：
+// 之前在同一地址跑过发布包，SW 会一直从缓存喂旧 JS，刷新也看不到 src 的改动。
+if (DEV && typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+  try {
+    navigator.serviceWorker?.getRegistrations?.().then((rs) => rs.forEach((r) => r.unregister())).catch(() => {});
+    if (typeof caches !== 'undefined') caches.keys().then((ks) => ks.forEach((k) => caches.delete(k))).catch(() => {});
+  } catch (_) {}
+}
 
 let ROAD_PRESETS = null;
 let ROAD_ALL = []; // 真正能当路段用的下标（road-data.json 里还混着场景地图，见下面筛选）
@@ -244,6 +254,8 @@ function goBack() {
   if (isBountyInTrade() && $('bountyView')?.style.display === 'flex') { restoreBountyList(); return; }
   // 收藏的蛋视图：返回先退回宝可梦蛋列表（两层子页都不压栈）
   if (isNurseryFavView()) { leaveNurseryFavView(); return; }
+  // 蛋仓库批量丢弃：返回先退出批量模式，留在蛋列表
+  if (isEggBatchDiscarding()) { cancelEggBatchDiscard(); return; }
   // 饲育屋蛋仓库视图：标题栏返回回饲育屋场地
   if (isNurseryEggView()) { leaveNurseryEggView(); return; }
   // 饲育屋放入列表：标题栏返回回饲育屋场地（选取页未压栈）
@@ -798,8 +810,10 @@ function onIntroMusicClick() {
 // 组合键、输入框聚焦、确认框弹出、开场剧情期间均不响应，避免误触打断流程
 function setupShortcuts() {
   document.addEventListener('keydown', (e) => {
+    // 输入法/合成事件里 e.key 可能是 undefined，统一兜底成空串
+    const rawKey = typeof e.key === 'string' ? e.key : '';
     // 老板键：Ctrl+W 收回托盘，等同点系统托盘图标收起；任何页面、输入框、弹窗下都生效
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === 'KeyW' || e.key.toLowerCase() === 'w')) {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === 'KeyW' || rawKey.toLowerCase() === 'w')) {
       const invoke = window.__TAURI__?.core?.invoke;
       if (!invoke) return; // 网页版没有托盘，交给浏览器自己处理
       e.preventDefault();
@@ -809,7 +823,7 @@ function setupShortcuts() {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (window.__introActive) return;
     if (slotWheelLocked()) return;
-    const key = e.key.toLowerCase();
+    const key = rawKey.toLowerCase();
     // 全屏场景锁定：字母快捷键一律不响应防误触跳页；Esc 放行（走 goBack 逐级安全退出场景）
     // 战斗中同样禁用字母键（跳页会打断对局），Esc 保留用于撤退
     if ((isModalLocked() || isBattleActive()) && key !== 'escape') return;
@@ -942,9 +956,11 @@ async function init() {
 
   document.addEventListener('wheel', e => {
     const dv = document.getElementById('dataView');
+    const dc = document.getElementById('dataContent');
     if (dv && dv.style.display !== 'none' && dv.contains(e.target)) {
       e.preventDefault();
-      dv.scrollTop += e.deltaY * 0.4;
+      // #dataView 只负责弹框定位（overflow:hidden），真正的滚动容器是 #dataContent
+      if (dc) dc.scrollTop += e.deltaY * 0.4;
     }
   }, { passive: false });
 
